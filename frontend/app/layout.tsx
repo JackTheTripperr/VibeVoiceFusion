@@ -3,6 +3,7 @@ import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
 import { ProjectProvider } from "@/lib/ProjectContext";
 import { SessionProvider } from "@/lib/SessionContext";
+import { GlobalTaskProvider } from "@/lib/GlobalTaskContext";
 import { LanguageProvider } from "@/lib/i18n/LanguageContext";
 import LayoutWrapper from "@/components/LayoutWrapper";
 import { Toaster } from "react-hot-toast";
@@ -34,11 +35,13 @@ export default function RootLayout({
       >
         <Toaster position="top-right" />
         <LanguageProvider>
-          <ProjectProvider>
-            <SessionProvider>
-              <LayoutWrapper>{children}</LayoutWrapper>
-            </SessionProvider>
-          </ProjectProvider>
+          <GlobalTaskProvider>
+            <ProjectProvider>
+              <SessionProvider>
+                <LayoutWrapper>{children}</LayoutWrapper>
+              </SessionProvider>
+            </ProjectProvider>
+          </GlobalTaskProvider>
         </LanguageProvider>
       </body>
     </html>

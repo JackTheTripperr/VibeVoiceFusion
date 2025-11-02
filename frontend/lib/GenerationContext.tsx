@@ -2,6 +2,7 @@
 
 import React, { createContext, useContext, useState, useEffect, useCallback, useRef } from 'react';
 import { api } from './api';
+import { useGlobalTask } from './GlobalTaskContext';
 import type { Generation, CreateGenerationRequest } from '@/types/generation';
 
 interface GenerationContextType {
@@ -28,6 +29,7 @@ interface GenerationProviderProps {
 }
 
 export function GenerationProvider({ children, projectId }: GenerationProviderProps) {
+  const { refreshTask } = useGlobalTask();
   const [generations, setGenerations] = useState<Generation[]>([]);
   const [currentGeneration, setCurrentGeneration] = useState<Generation | null>(null);
   const [loading, setLoading] = useState(false);
@@ -93,9 +95,13 @@ export function GenerationProvider({ children, projectId }: GenerationProviderPr
 
             // Refresh full history
             await fetchGenerations();
+
+            // Immediately refresh global task status when task completes
+            await refreshTask();
           } catch (err) {
             console.error('Error in final poll:', err);
             await fetchGenerations();
+            await refreshTask();
           }
         }
 
@@ -130,7 +136,7 @@ export function GenerationProvider({ children, projectId }: GenerationProviderPr
       console.error('Error fetching current generation:', err);
       setCurrentGeneration(null);
     }
-  }, [projectId, fetchGenerations]);
+  }, [projectId, fetchGenerations, refreshTask]);
 
   // Start a new generation
   const startGeneration = useCallback(async (request: CreateGenerationRequest): Promise<Generation> => {
@@ -143,11 +149,17 @@ export function GenerationProvider({ children, projectId }: GenerationProviderPr
       setError(null);
       const response = await api.createGeneration(projectId, request);
 
-      // Update current generation
+      // Update current generation immediately
       setCurrentGeneration(response.generation);
 
       // Refresh generations list
       await fetchGenerations();
+
+      // Immediately fetch current generation to ensure global state is updated
+      await fetchCurrentGeneration();
+
+      // Immediately refresh global task status to update Navigation icon
+      await refreshTask();
 
       return response.generation;
     } catch (err) {
@@ -157,7 +169,7 @@ export function GenerationProvider({ children, projectId }: GenerationProviderPr
     } finally {
       setLoading(false);
     }
-  }, [projectId, fetchGenerations]);
+  }, [projectId, fetchGenerations, fetchCurrentGeneration, refreshTask]);
 
   // Delete a single generation
   const deleteGeneration = useCallback(async (requestId: string): Promise<void> => {

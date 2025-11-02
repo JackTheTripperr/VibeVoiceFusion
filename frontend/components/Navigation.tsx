@@ -4,9 +4,8 @@ import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { useProject } from "@/lib/ProjectContext";
 import { useLanguage } from "@/lib/i18n/LanguageContext";
+import { useGlobalTask } from "@/lib/GlobalTaskContext";
 import { useState, useEffect, useRef } from "react";
-import { api } from "@/lib/api";
-import type { Generation } from "@/types/generation";
 
 interface MenuItem {
   id: string;
@@ -53,43 +52,15 @@ export default function Navigation() {
   const router = useRouter();
   const { currentProject, projects, selectProject } = useProject();
   const { t, locale, setLocale } = useLanguage();
+  const { currentTask: runningGeneration } = useGlobalTask();
   const [showProjectMenu, setShowProjectMenu] = useState(false);
   const [mounted, setMounted] = useState(false);
   const dropdownRef = useRef<HTMLDivElement>(null);
   const menuItems = getMenuItems();
 
-  // Task monitoring state
-  const [runningGeneration, setRunningGeneration] = useState<Generation | null>(null);
-  const pollingIntervalRef = useRef<NodeJS.Timeout | null>(null);
-
   // Only show project-dependent content after client-side mount
   useEffect(() => {
     setMounted(true);
-  }, []);
-
-  // Poll for running generation globally
-  useEffect(() => {
-    const checkRunningGeneration = async () => {
-      try {
-        const response = await api.getCurrentGeneration();
-        setRunningGeneration(response.generation);
-      } catch (error) {
-        console.error('Error checking running generation:', error);
-        setRunningGeneration(null);
-      }
-    };
-
-    // Initial check
-    checkRunningGeneration();
-
-    // Poll every 60 seconds
-    pollingIntervalRef.current = setInterval(checkRunningGeneration, 60000);
-
-    return () => {
-      if (pollingIntervalRef.current) {
-        clearInterval(pollingIntervalRef.current);
-      }
-    };
   }, []);
 
   // Navigate to generation page of project with running task
