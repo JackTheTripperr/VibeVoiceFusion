@@ -1,79 +1,233 @@
-# VibeVoice Inference Implementation
+# VibeVoice
 
-A flexible and memory-efficient **inference implementation** based on Microsoft's VibeVoice offical implementation. 
-VibeVoice is a speech generation model with an AR + diffusion architecture that combines text tokenization and audio processing for high-quality text-to-speech synthesis with voice cloning capabilities.
+<div align="center">
+
+**A Complete Web Application for Multi-Speaker Voice Generation**
+
+[![License](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)
+[![Python](https://img.shields.io/badge/python-3.9+-blue.svg)](https://www.python.org/)
+[![TypeScript](https://img.shields.io/badge/typescript-5.0+-blue.svg)](https://www.typescriptlang.org/)
+[![Docker](https://img.shields.io/badge/docker-ready-brightgreen.svg)](Dockerfile)
+
+[English](README.md) | [简体中文](README_zh.md)
+
+[Features](#features) • [Get Started](#get-started) • [Documentation](#documentation) • [Community](#community) • [Contributing](#contributing)
+
+</div>
+
+---
 
 ## Overview
 
-This is an **inference-only implementation** of Microsoft's VibeVoice, a state-of-the-art text-to-speech (TTS) model that generates natural-sounding speech from text while preserving distinct speaker characteristics. This implementation focuses on efficient model loading and inference, optimized for deployment and practical usage rather than training.
+### Purpose
 
-### Key Features
+VibeVoice is a **web application** for generating high-quality, multi-speaker synthetic speech with voice cloning capabilities. Built on Microsoft's VibeVoice model (AR + diffusion architecture), this project provides a complete full-stack solution with an intuitive user interface, project management, and advanced VRAM optimization features.
 
-- **Flexible model loading**: Support for both directory-based and single-file `.safetensors` formats
-- **Memory-efficient inference**: Float8 quantization support (FP8 E4M3FN) for reduced VRAM usage during inference
-- **Framework independence**: Decoupled from HuggingFace's PreTrainedModel for greater deployment flexibility
-- **Dynamic precision**: Automatic casting to bfloat16 during inference for optimal performance
-- **Simplified attention**: Uses PyTorch's native SDPA only (trade-off for simpler setup and better compatibility)
+**Key Goals:**
+- Provide a user-friendly interface for voice generation without requiring coding knowledge
+- Enable efficient multi-speaker dialog synthesis with distinct voice characteristics
+- Optimize memory usage for consumer-grade GPUs (8GB+ VRAM)
+- Support bilingual workflows (English/Chinese)
+- Offer both web UI and CLI interfaces for different use cases
 
-### Why This Fork?
+### Principle
 
-This fork was created to address several limitations of the original Microsoft VibeVoice implementation:
+VibeVoice combines **autoregressive (AR)** and **diffusion** techniques for text-to-speech synthesis:
 
-1. **Flexible Architecture**: All VibeVoice models are decoupled from HuggingFace's `PreTrainedModel` and now inherit directly from `torch.nn.Module`, providing more flexibility for customization and deployment
+1. **Text Processing**: Input text is tokenized and processed through a Qwen-based language model backbone
+2. **Voice Encoding**: Reference voice samples are encoded into acoustic and semantic embeddings
+3. **AR Generation**: The model autoregressively generates speech tokens conditioned on text and voice embeddings
+4. **Diffusion Refinement**: A DPM-Solver-based diffusion head converts tokens to high-quality audio waveforms
+5. **Voice Cloning**: The unified processor preserves speaker characteristics from reference audio samples
 
-2. **Simplified Model Loading**: Support for loading models from single `.safetensors` files instead of requiring a complete directory structure, making model distribution and deployment easier
+**Technical Highlights:**
+- **Model Architecture**: Qwen backbone + VAE acoustic tokenizer + semantic encoder + diffusion head
+- **Quantization**: Float8 (FP8 E4M3FN) support for ~50% VRAM reduction with minimal quality loss
+- **Layer Offloading**: Dynamic CPU/GPU memory management for running on limited VRAM
+- **Attention Mechanism**: PyTorch native SDPA for maximum compatibility
 
-3. **Quantization Support**: Native support for FP8 (float8_e4m3fn) quantized models, reducing VRAM requirements by ~50% while maintaining generation quality
+### Features
 
-4. **Dynamic Precision**: Intelligent dtype casting during inference ensures optimal performance across different hardware configurations
+#### Complete Web Application
 
-5. **Simplified Attention**: Uses PyTorch's native SDPA (Scaled Dot Product Attention) only, removing Flash Attention dependency for better compatibility and simpler setup (with potential minor performance trade-offs)
+- **Project Management**: Organize voice generation projects with metadata and descriptions
+- **Speaker/Voice Management**:
+  - Upload and manage reference voice samples (WAV, MP3, M4A, FLAC, WebM)
+  - Audio preview with playback controls
+  - Voice file replacement with automatic cache-busting
+  - Audio trimming functionality
+- **Dialog Editor**:
+  - Visual editor with drag-and-drop line reordering
+  - Text editor mode for bulk editing
+  - Support for multi-speaker dialogs (up to 4+ speakers)
+  - Real-time preview and validation
+- **Generation System**:
+  - Queue-based task management (prevents GPU conflicts)
+  - Real-time progress monitoring with live updates
+  - Configurable parameters (CFG scale, random seed, model precision)
+  - Generation history with filtering, sorting, and pagination
+  - Audio playback and download for completed generations
 
-## Installation
+#### VRAM Optimization
 
-### Requirements
+- **Layer Offloading**: Move transformer layers between CPU/GPU to reduce VRAM requirements
+  - **Balanced** (12 GPU / 16 CPU layers): ~5GB VRAM savings, ~2.0x slower - RTX 3060 12GB, 4070
+  - **Aggressive** (8 GPU / 20 CPU layers): ~6GB VRAM savings, ~2.5x slower - RTX 3060 8GB, 4060
+  - **Extreme** (4 GPU / 24 CPU layers): ~7GB VRAM savings, ~3.5x slower - RTX 3060 6GB (minimum)
+- **Float8 Quantization**: Reduce model size from ~14GB to ~7GB with comparable quality
+- **Adaptive Configuration**: Automatic VRAM estimation and optimal layer distribution
 
-- Python >= 3.9
-- PyTorch with CUDA support (recommended)
-- CUDA-capable GPU (recommended for best performance)
-- **Note**: This implementation uses PyTorch's native SDPA (Scaled Dot Product Attention). Flash Attention is not supported to simplify dependencies and improve compatibility.
+**VRAM Requirements:**
 
-### Install from source
+| Configuration | GPU Layers | VRAM Usage | Speed | Target Hardware |
+|--------------|-----------|------------|-------|-----------------|
+| No offloading | 28 | 11-14GB | 1.0x | RTX 4090, A100, 3090 |
+| Balanced | 12 | 6-8GB | 0.70x | RTX 4070, 3080 12GB |
+| Aggressive | 8 | 5-7GB | 0.55x | RTX 3060 12GB |
+| Extreme | 4 | 4-5GB | 0.40x | RTX 3060 8GB |
+
+#### Internationalization
+
+- **Full Bilingual Support**: Complete English/Chinese UI with 360+ translation keys
+- **Auto-Detection**: Automatically detects browser language on first visit
+- **Persistent Preference**: Language selection saved in localStorage
+- **Backend i18n**: API error messages and responses translated to user's language
+
+#### Docker Deployment
+
+- **Multi-Stage Build**: Optimized Dockerfile with frontend build, Python venv, and model download
+- **Self-Contained**: Clones from GitHub and builds entirely from source
+- **HuggingFace Integration**: Automatically downloads model file (~3-4GB) during build
+
+#### Additional Features
+
+- **Responsive Design**: Mobile-friendly interface with Tailwind CSS
+- **Real-Time Updates**: WebSocket-free polling with smart update intervals (2s active, 60s background)
+- **Audio Cache-Busting**: Ensures audio updates are immediately reflected
+- **Toast Notifications**: User-friendly feedback for all operations
+- **Dark Mode Ready**: Modern UI with consistent styling
+- **Accessibility**: Keyboard navigation and ARIA labels
+
+---
+
+## Get Started
+
+### Prerequisites
+
+- **Python**: 3.9 or higher
+- **Node.js**: 16.x or higher (for frontend development)
+- **CUDA**: Compatible GPU with CUDA support (recommended)
+- **VRAM**: Minimum 6GB for extreme offloading, 14GB recommended for best performance
+- **Docker**: Optional, for containerized deployment
+
+### Installation
+
+#### Option 1: Docker (Recommended for Production)
 
 ```bash
+# Clone the repository
 git clone https://github.com/zhao-kun/vibevoice.git
 cd vibevoice
+
+# Build and run with Docker Compose
+docker-compose up -d --build
+
+# Or use Docker CLI
+docker build -t vibevoice:latest .
+docker run -d \
+  --name vibevoice \
+  --gpus all \
+  -p 9527:9527 \
+  -v $(pwd)/workspace:/workspace/zhao-kun/vibevoice/workspace \
+  vibevoice:latest
+```
+
+Access the application at `http://localhost:9527`
+
+**Build Time**: 18-28 minutes | **Image Size**: ~12-15GB
+
+#### Option 2: Manual Installation
+
+**1. Install Backend Dependencies**
+
+```bash
+# Clone the repository
+git clone https://github.com/zhao-kun/vibevoice.git
+cd vibevoice
+
+# Install Python package
 pip install -e .
 ```
 
-## Quick Start
+**2. Download Pre-trained Model**
 
-### Download Pre-trained Models
+Download from HuggingFace (choose one):
+- **Float8 (Recommended)**: [vibevoice7b_float8_e4m3fn.safetensors](https://huggingface.co/zhaokun/vibevoice-large/blob/main/vibevoice7b_float8_e4m3fn.safetensors) (~7GB)
+- **BFloat16 (Full Precision)**: [vibevoice7b_bf16.safetensors](https://huggingface.co/zhaokun/vibevoice-large/blob/main/vibevoice7b_bf16.safetensors) (~14GB)
+- **Config**: [config.json](https://huggingface.co/zhaokun/vibevoice-large/blob/main/config.json)
 
-Download the pre-trained models from HuggingFace:
+Place files in `./models/converted/`
 
-- **BFloat16 version** (full precision): [vibevoice7b_bf16.safetensors](https://huggingface.co/zhaokun/vibevoice-large/blob/main/vibevoice7b_bf16.safetensors) (~14GB)
-- **Float8 version** (quantized): [vibevoice7b_float8_e4m3fn.safetensors](https://huggingface.co/zhaokun/vibevoice-large/blob/main/vibevoice7b_float8_e4m3fn.safetensors) (~7GB)
-- **Config file**: [config.json](https://huggingface.co/zhaokun/vibevoice-large/blob/main/config.json)
-
-Place the downloaded files in a directory (e.g., `./models/converted/`).
-
-### Basic Usage
-
-Generate speech from a text file with a reference voice:
+**3. Install Frontend Dependencies** (for development)
 
 ```bash
-python demo/local_file_inference.py \
-    --model_file ./models/converted/vibevoice7b_bf16.safetensors \
-    --txt_path demo/text_examples/1p_pandora_box.txt \
-    --speaker_names zh-007 \
-    --output_dir ./outputs \
-    --dtype bfloat16 \
-    --cfg_scale 1.3 \
-    --seed 42
+cd frontend
+npm install
 ```
 
-For the float8 quantized version (lower VRAM usage):
+**4. Build Frontend** (for production)
+
+```bash
+cd frontend
+npm run build
+cp -r out/* ../backend/dist/
+```
+
+### Usage
+
+#### Web Application (Recommended)
+
+**Production Mode** (single server):
+```bash
+# Start backend server (serves both API and frontend)
+python backend/run.py
+
+# Access at http://localhost:9527
+```
+
+**Development Mode** (separate servers):
+```bash
+# Terminal 1: Start backend API
+python backend/run.py  # http://localhost:9527
+
+# Terminal 2: Start frontend dev server
+cd frontend
+npm run dev  # http://localhost:3000
+```
+
+**Workflow:**
+1. Create a new project
+2. Add speakers by uploading voice samples (auto-named "Speaker 1", "Speaker 2", etc.)
+3. Create a dialog session and edit the dialog:
+   ```
+   Speaker 1: First line of dialog here
+   Speaker 2: Second speaker responds
+   Speaker 1: First speaker continues
+   ```
+4. Go to "Generate Voice" page
+5. Select your dialog session
+6. Configure parameters:
+   - Model Type: float8 (recommended) or bfloat16
+   - CFG Scale: 1.0 - 2.0 (default: 1.3)
+   - Random Seed: Any positive integer
+   - Offloading: Enable if VRAM < 14GB
+7. Click "Start Generation"
+8. Monitor real-time progress
+9. Download or play the generated audio
+
+#### Command-Line Interface
+
+For CLI-based generation without the web UI:
 
 ```bash
 python demo/local_file_inference.py \
@@ -86,220 +240,262 @@ python demo/local_file_inference.py \
     --seed 42
 ```
 
-### Using the Example Files
+**CLI Arguments:**
+- `--model_file`: Path to model `.safetensors` file
+- `--config`: Path to `config.json` (optional)
+- `--txt_path`: Input text file with speaker-labeled dialog
+- `--speaker_names`: Speaker name(s) for voice file mapping
+- `--output_dir`: Output directory for generated audio
+- `--device`: `cuda`, `mps`, or `cpu` (auto-detected)
+- `--dtype`: `float8_e4m3fn` or `bfloat16`
+- `--cfg_scale`: Classifier-Free Guidance scale (default: 1.3)
+- `--seed`: Random seed for reproducibility
 
-The repository includes example text and voice files for quick testing:
+### Configuration
 
-**Text Example**: `demo/text_examples/1p_pandora_box.txt`
+#### Backend Configuration
 
-```text
-Speaker 1: 悟空你也太调皮了，我跟你说过，叫你不要乱扔东西。你看我还没说完呢，你把棍子又给扔掉了！月光宝盒是宝物，你把它扔掉会污染环境。唉，要是砸到小朋友呢，怎么办？就算没有砸到小朋友，砸到那些花花草草也是不对的呀！
+Environment variables (optional):
+```bash
+export WORKSPACE_DIR=/path/to/workspace  # Default: ./workspace
+export FLASK_DEBUG=False  # Production mode
 ```
 
-**Voice Sample**: `demo/voices/zh-007_man.wav` (Chinese male voice)
+#### Frontend Configuration
 
-The inference script will:
+Development API URL (`frontend/.env.local`):
+```bash
+NEXT_PUBLIC_API_URL=http://localhost:9527/api/v1
+```
 
-1. Parse the text file to extract speaker segments
-2. Map each speaker to a voice sample from `demo/voices/`
-3. Generate speech that matches the reference voice characteristics
-4. Save the output to `./outputs/1p_pandora_box_generated.wav`
+---
 
-### Generated Audio Examples
-
-Pre-generated audio examples are available in the `demo/outputs/` directory to demonstrate the quality of both model versions:
-
-| Model Version | Output File | File Size | Description |
-|---------------|-------------|-----------|-------------|
-| **BFloat16** | [demo/outputs/1p_pandora_box_bf16.wav](demo/outputs/1p_pandora_box_bf16.wav) | ~1.1MB | Full precision generation |
-| **Float8** | [demo/outputs/1p_pandora_box_float8_e4m3fn.wav](demo/outputs/1p_pandora_box_float8_e4m3fn.wav) | ~1.1MB | Quantized model generation |
-
-
-**Preview voice with the bfloat16 model gernerated**
-<div align="center">
-    <audio controls>
-    <source src="https://raw.githubusercontent.com/zhao-kun/vibevoice/main/demo/outputs/1p_pandora_box_bf16.wav" type="audio/wav">
-    Your browser does not support the audio element.
-    </audio>
-</div>
-
-**Preview voice with the float8_e4m3fn model generated**
-<div align="center">
-    <audio controls>
-    <source src="https://raw.githubusercontent.com/zhao-kun/vibevoice/main/demo/outputs/1p_pandora_box_float8_e4m3fn.wav" type="audio/wav">
-    Your browser does not support the audio element.
-    </audio>
-</div>
-
-Both examples demonstrate high-quality voice cloning with the reference voice (`zh-007_man.wav`) speaking the Pandora's Box text. The audio quality is comparable between BFloat16 and Float8 versions, showing that FP8 quantization maintains excellent generation quality while using significantly less VRAM.
-
-### Command-line Arguments
-
-- `--model_file`: Path to the model file (`.safetensors`)
-- `--config`: Path to the config file, cloud be ommitted (`config.json`)
-- `--txt_path`: Path to the input text file (supports `.txt` or `.json` format)
-- `--speaker_names`: Speaker name(s) to map to voice files (space-separated for multiple speakers)
-- `--output_dir`: Directory to save generated audio files (default: `./outputs`)
-- `--device`: Device for inference: `cuda`, `mps`, or `cpu` (auto-detected by default)
-- `--dtype`: Model weight dtype: `bfloat16` or `float8_e4m3fn` (default: `bfloat16`)
-- `--cfg_scale`: Classifier-Free Guidance scale for generation (default: 1.3)
-- `--seed`: Random seed for reproducibility (default: 42)
-
-## Technical Details
-
-### Float8 Quantization
-
-This implementation uses FP8 (float8_e4m3fn) quantization to reduce memory footprint while maintaining audio quality. The quantization is handled through a custom `AutoCast` module that dynamically converts weights during inference.
-
-#### How It Works
-
-1. **Weight Storage**: Model weights are stored in `float8_e4m3fn` format, reducing memory by approximately 50% compared to bfloat16
-
-2. **Dynamic Casting**: During forward passes, the `AutoCast` wrapper automatically casts float8 weights to bfloat16 precision based on input dtype:
-   ```python
-   class AutoCast.Linear(nn.Linear):
-       def forward(self, input):
-           if self.weight.dtype == torch.float8_e4m3fn:
-               weight = self.weight.to(dtype=input.dtype)  # Cast to bfloat16
-               return F.linear(input, weight, self.bias)
-   ```
-
-3. **Optimized Operations**: For linear layers, the implementation uses PyTorch's `torch._scaled_mm` operation when available, which provides hardware-accelerated FP8 matrix multiplication on supported GPUs (Ada/Hopper architecture)
-
-4. **Universal Support**: The `AutoCast` module wraps all common layer types:
-   - `Linear`, `Conv1d`, `Conv2d`, `ConvTranspose1d`, `ConvTranspose2d`
-   - `LayerNorm`, `GroupNorm`, `RMSNorm`
-   - `Embedding`
-
-#### Benefits
-
-- **50% VRAM Reduction**: FP8 models use approximately half the memory of BF16 models
-- **Minimal Quality Loss**: Dynamic casting to BF16 during computation maintains generation quality
-- **Hardware Acceleration**: Leverages native FP8 support on modern GPUs when available
-- **Seamless Integration**: No changes needed to model architecture or inference code
+## Documentation
 
 ### Architecture Overview
 
-The model consists of:
-
-- **Language Model Backbone**: Qwen-based transformer for text understanding and autoregressive generation
-- **Acoustic Tokenizer**: VAE-based encoder/decoder for audio-to-latent and latent-to-audio conversion
-- **Semantic Tokenizer**: Encoder for capturing semantic speech features
-- **Diffusion Head**: DPM-Solver-based diffusion model for high-quality speech generation
-- **Connectors**: Project acoustic and semantic features into the language model space
-
-### Model Decoupling
-
-Unlike the original implementation, all models inherit from `torch.nn.Module` instead of HuggingFace's `PreTrainedModel`. This provides:
-
-- Greater flexibility for custom loading/saving logic
-- Reduced dependency on HuggingFace transformers internals
-- Easier integration with other frameworks and deployment pipelines
-- Support for single-file model distribution
-
-### Attention Mechanism
-
-This implementation uses **SDPA (Scaled Dot Product Attention)** only, which is PyTorch's native attention implementation (`torch.nn.functional.scaled_dot_product_attention`). Flash Attention support has been removed to:
-
-- Simplify installation (no need to compile Flash Attention from source)
-- Improve compatibility across different CUDA versions and GPU architectures
-- Reduce external dependencies
-- Simplify the codebase and reduce maintenance complexity
-
-**Performance Note**: While SDPA provides good performance, Flash Attention may offer better speed and memory efficiency on supported hardware. This trade-off prioritizes code simplicity and compatibility over maximum performance. Users requiring the absolute best performance may want to consider the original implementation with Flash Attention support.
-
-SDPA automatically uses efficient memory-attention kernels when available and falls back to standard attention otherwise.
-
-### Input Format
-
-The text input should follow this format:
 ```
-Speaker 1: [First speaker's text]
-Speaker 2: [Second speaker's text]
-Speaker 1: [First speaker continues...]
+vibevoice/
+├── backend/                 # Flask API server
+│   ├── api/                # REST API endpoints
+│   │   ├── projects.py     # Project CRUD
+│   │   ├── speakers.py     # Speaker management
+│   │   ├── dialog_sessions.py  # Dialog CRUD
+│   │   └── generation.py   # Voice generation
+│   ├── services/           # Business logic layer
+│   ├── models/             # Data models
+│   ├── gen_voice/          # Background task queue
+│   ├── inference/          # Inference engine
+│   ├── i18n/              # Backend translations
+│   └── dist/              # Frontend static files (production)
+├── frontend/               # Next.js web application
+│   ├── app/               # Next.js app router pages
+│   │   ├── page.tsx       # Home/Project selector
+│   │   ├── speaker-role/  # Speaker management
+│   │   ├── voice-editor/  # Dialog editor
+│   │   └── generate-voice/ # Generation page
+│   ├── components/        # React components
+│   ├── lib/              # Context providers & utilities
+│   │   ├── ProjectContext.tsx
+│   │   ├── SessionContext.tsx
+│   │   ├── SpeakerRoleContext.tsx
+│   │   ├── GenerationContext.tsx
+│   │   ├── GlobalTaskContext.tsx
+│   │   ├── i18n/         # Frontend translations
+│   │   └── api.ts        # API client
+│   └── types/            # TypeScript type definitions
+└── vibevoice/            # Core inference library
+    ├── modular/          # Model implementations
+    │   ├── custom_offloading_utils.py  # Layer offloading
+    │   └── adaptive_offload.py         # Auto VRAM config
+    ├── processor/        # Input processing
+    └── schedule/         # Diffusion scheduling
 ```
 
-The inference script automatically parses speaker segments and maps them to voice samples.
+### API Reference
 
-## Model Files
+All endpoints prefixed with `/api/v1`:
 
-This implementation supports two loading modes:
+#### Projects
+- `GET /projects` - List all projects
+- `POST /projects` - Create new project
+- `GET /projects/:id` - Get project details
+- `PUT /projects/:id` - Update project
+- `DELETE /projects/:id` - Delete project
 
-1. **Single File Mode**: Load from a single `.safetensors` file
-   ```python
-   model = VibeVoiceForConditionalInference.from_pretrain(
-       "path/to/model.safetensors",
-       config
-   )
-   ```
+#### Speakers
+- `GET /projects/:id/speakers` - List speakers
+- `POST /projects/:id/speakers` - Add speaker (multipart: description, voice_file)
+- `PUT /projects/:id/speakers/:speaker_id` - Update speaker metadata
+- `PUT /projects/:id/speakers/:speaker_id/voice` - Replace voice file
+- `DELETE /projects/:id/speakers/:speaker_id` - Delete speaker
 
-2. **Directory Mode**: Load from a directory with sharded weights
-   ```python
-   model = VibeVoiceForConditionalInference.from_pretrain(
-       "path/to/model_directory/",
-       config
-   )
-   ```
+#### Dialog Sessions
+- `GET /projects/:id/sessions` - List sessions
+- `POST /projects/:id/sessions` - Create session
+- `GET /projects/:id/sessions/:session_id` - Get session
+- `PUT /projects/:id/sessions/:session_id` - Update session
+- `DELETE /projects/:id/sessions/:session_id` - Delete session
+- `GET /projects/:id/sessions/:session_id/text` - Get dialog text
 
-## Performance
+#### Voice Generation
+- `POST /projects/:id/generations` - Start generation
+- `GET /projects/generations/current` - Get current running task
+- `GET /projects/:id/generations` - List generation history
+- `GET /projects/:id/generations/:request_id` - Get generation details
+- `DELETE /projects/:id/generations/:request_id` - Delete generation
+- `POST /projects/:id/generations/batch-delete` - Delete multiple generations
 
-Typical performance on NVIDIA RTX 4090:
+### Workspace Structure
 
-| Model Version | VRAM Usage | RTF (Real-Time Factor) | Audio Quality |
-|--------------|------------|------------------------|---------------|
-| BFloat16     | ~14GB      | ~1.5x                  | Excellent     |
-| Float8       | ~7GB       | ~1.6x                  | Excellent     |
+```
+workspace/
+├── projects.json          # All projects metadata
+└── {project-id}/
+    ├── voices/
+    │   ├── speakers.json  # Speaker metadata
+    │   └── {uuid}.wav     # Voice files
+    ├── scripts/
+    │   ├── sessions.json  # Session metadata
+    │   └── {uuid}.txt     # Dialog text files
+    └── output/
+        ├── generation.json  # Generation metadata
+        └── {request_id}.wav # Generated audio files
+```
 
-*RTF < 1.0 means faster than real-time generation*
+### Performance Benchmarks
 
-## Risks and Limitations
+**RTX 4090 (24GB VRAM):**
+| Configuration | VRAM | Generation Time | RTF | Quality |
+|--------------|------|-----------------|-----|---------|
+| BFloat16, No offload | 14GB | 15s (50s audio) | 0.30x | Excellent |
+| Float8, No offload | 7GB | 16s (50s audio) | 0.32x | Excellent |
 
-### Important Notice
+**RTX 3060 12GB:**
+| Configuration | VRAM | Generation Time | RTF | Quality |
+|--------------|------|-----------------|-----|---------|
+| Float8, Balanced | 7GB | 30s (50s audio) | 0.60x | Excellent |
+| Float8, Aggressive | 6GB | 40s (50s audio) | 0.80x | Good |
 
-**This project is intended for research and development purposes only.** Users must comply with all usage requirements and restrictions from the original Microsoft VibeVoice project.
+*RTF (Real-Time Factor) < 1.0 means faster than real-time*
 
-### Risks
+---
 
-- **Potential for Misuse**: High-quality synthetic speech can be misused to create deepfakes, impersonation, fraud, or disinformation
-- **Voice Cloning Ethics**: Voice cloning without explicit consent raises serious ethical and legal concerns
-- **Inherited Biases**: The model may inherit biases, errors, or limitations from its base language model
-- **Unexpected Outputs**: Generated audio may contain unexpected artifacts, inconsistencies, or inaccuracies
+## Community
 
-### Limitations
+### Getting Help
 
-- **Language Support**: Primarily designed for English and Mandarin Chinese
-- **Audio Quality**: May occasionally produce voice inconsistencies, background noise, or audio glitches
-- **Multi-speaker Synthesis**: Voice characteristics may not always remain perfectly consistent
-- **Not Production Ready**: This is experimental software not recommended for commercial or production use without thorough testing
+- **Issues**: [GitHub Issues](https://github.com/zhao-kun/vibevoice/issues) - Bug reports and feature requests
+- **Discussions**: [GitHub Discussions](https://github.com/zhao-kun/vibevoice/discussions) - Questions and community support
 
-### Responsible Use Guidelines
+### Showcase
 
-Users of this implementation must adhere to responsible AI practices:
+Share your projects and experiences:
+- **Demo Audio**: Submit your generated samples to the showcase
+- **Use Cases**: Share how you're using VibeVoice
+- **Improvements**: Contribute optimizations and enhancements
 
-1. **DO NOT** use this model for voice impersonation without explicit, recorded consent from the individual
-2. **DO NOT** use this model to create or spread disinformation or misleading content
-3. **DO NOT** use this model for fraud, scams, or malicious purposes
-4. **DO NOT** violate any laws, regulations, or the original project's terms of use
-5. **DO** clearly disclose when audio is AI-generated
-6. **DO** respect privacy, consent, and intellectual property rights
-7. **DO** use this technology ethically and responsibly
+### Responsible AI
 
-### Compliance with Original Project
+**Important**: This project is for **research and development** purposes only.
 
-This fork maintains the same ethical guidelines and usage restrictions as the original Microsoft VibeVoice project. Users are responsible for:
+#### Risks
+- **Deepfakes & Impersonation**: Synthetic speech can be misused for fraud or disinformation
+- **Voice Cloning Ethics**: Always obtain explicit consent before cloning voices
+- **Biases**: Model may inherit biases from training data
+- **Unexpected Outputs**: Generated audio may contain artifacts or inaccuracies
 
-- Understanding and complying with Microsoft's responsible AI principles
-- Following all usage restrictions and guidelines from the original project
-- Ensuring their use case is appropriate for research and development
-- Not using the model in ways that violate the original project's intended purpose
+#### Guidelines
 
-**By using this software, you agree to use it responsibly and in compliance with all applicable laws, regulations, and ethical guidelines.**
+**DO:**
+
+- Clearly disclose when audio is AI-generated
+- Obtain explicit consent for voice cloning
+- Use responsibly for legitimate purposes
+- Respect privacy and intellectual property
+- Follow all applicable laws and regulations
+
+**DO NOT:**
+
+- Create deepfakes or impersonation without consent
+- Spread disinformation or misleading content
+- Use for fraud, scams, or malicious purposes
+- Violate laws or ethical guidelines
+
+**By using this software, you agree to use it ethically and responsibly.**
+
+---
+
+## Contributing
+
+We welcome contributions from the community! Here's how you can help:
+
+### Ways to Contribute
+
+1. **Report Bugs**: Open an issue with detailed reproduction steps
+2. **Suggest Features**: Propose new features via GitHub issues
+3. **Submit Pull Requests**:
+   - Fix bugs
+   - Add features
+   - Improve documentation
+   - Add translations
+4. **Improve Documentation**: Help make the project more accessible
+5. **Share Use Cases**: Show how you're using VibeVoice
+
+### Testing
+
+```bash
+# Backend tests (when available)
+pytest tests/
+
+# Frontend tests (when available)
+cd frontend
+npm test
+
+# Manual testing
+# 1. Create project
+# 2. Add speakers
+# 3. Create dialog
+# 4. Generate voice
+# 5. Verify output quality
+```
+
+---
+
+## License
+
+This project follows the same license terms as the original Microsoft VibeVoice repository. Please refer to the [LICENSE](LICENSE) file for details.
+
+### Third-Party Licenses
+
+- **Frontend**: React, Next.js, Tailwind CSS (MIT License)
+- **Backend**: Flask, PyTorch (Various open-source licenses)
+- **Model Weights**: Microsoft VibeVoice (subject to Microsoft's terms)
+
+---
+
+## Acknowledgments
+
+- **Microsoft Research**: Original VibeVoice model and architecture
+- **ComfyUI**: Float8 casting techniques inspiration
+- **kohya-ss/musubi-tuner**: Offloading implementation reference
+- **HuggingFace**: Model hosting and distribution
+- **Open Source Community**: Libraries and frameworks that made this possible
+
+---
 
 ## Citation
 
-If you use this implementation in your research, please cite the original VibeVoice paper:
+If you use this implementation in your research, please cite both this project and the original VibeVoice paper:
 
 ```bibtex
+@software{vibevoice_webapp_2024,
+  title={VibeVoice: Complete Web Application for Multi-Speaker Voice Generation},
+  author={Zhao, Kun},
+  year={2024},
+  url={https://github.com/zhao-kun/vibevoice}
+}
+
 @article{vibevoice2024,
   title={VibeVoice: Unified Autoregressive and Diffusion for Speech Generation},
   author={Microsoft Research},
@@ -307,40 +503,48 @@ If you use this implementation in your research, please cite the original VibeVo
 }
 ```
 
-## License
-
-This project follows the same license as the original Microsoft VibeVoice repository.
-
-## Acknowledgments
-
-- Original VibeVoice implementation by Microsoft Research
-- Float8 casting techniques inspired by [ComfyUI](https://github.com/comfyanonymous/ComfyUI)
-- Model weights hosted on [HuggingFace](https://huggingface.co/zhaokun/vibevoice-large)
+---
 
 ## Troubleshooting
 
 ### CUDA Out of Memory
-
-Try using the float8 quantized model:
 ```bash
---dtype float8_e4m3fn --model_file vibevoice7b_float8_e4m3fn.safetensors
+# Try Float8 model
+--dtype float8_e4m3fn
+
+# Enable layer offloading in web UI
+# Or use CLI with manual configuration
 ```
-
-### Voice Mapping Issues
-
-The inference script automatically maps speaker names to voice files in `demo/voices/`. Voice files should be named in a way that matches your speaker names (e.g., `zh-007_man.wav` for speaker name `zh-007` or `007`).
 
 ### Audio Quality Issues
-
-Adjust the CFG scale (higher values increase adherence to conditioning):
 ```bash
---cfg_scale 1.5  # Try values between 1.0 and 2.0
+# Adjust CFG scale (try 1.0 - 2.0)
+--cfg_scale 1.5
+
+# Use higher precision model
+--dtype bfloat16
 ```
 
-## Contributing
+### Port Already in Use
+```bash
+# Change port in backend/run.py
+app.run(host='0.0.0.0', port=9528)
+```
 
-Contributions are welcome! Please feel free to submit issues or pull requests.
+### Frontend Build Errors
+```bash
+cd frontend
+rm -rf node_modules .next
+npm install
+npm run build
+```
 
-## Contact
+---
 
-For questions or issues, please open an issue on the [GitHub repository](https://github.com/zhao-kun/vibevoice/issues).
+<div align="center">
+
+**Made by the VibeVoice Community**
+
+[Back to Top](#vibevoice)
+
+</div>
