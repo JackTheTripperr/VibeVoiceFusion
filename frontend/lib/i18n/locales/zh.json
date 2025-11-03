@@ -31,10 +31,10 @@
     "saving": "保存中..."
   },
   "app": {
-    "title": "VibeVoice",
-    "subtitle": "语音生成工作室",
+    "title": "VibeVoiceFusion",
+    "subtitle": "多说话人语音工作室",
     "version": "版本 1.0.0",
-    "copyright": "© 2025 VibeVoice"
+    "copyright": "© 2025 VibeVoiceFusion"
   },
   "navigation": {
     "currentProject": "当前项目",

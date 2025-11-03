@@ -31,10 +31,10 @@
     "saving": "Saving..."
   },
   "app": {
-    "title": "VibeVoice",
-    "subtitle": "Speech Generation Studio",
+    "title": "VibeVoiceFusion",
+    "subtitle": "Multi-Speaker Voice Studio",
     "version": "Version 1.0.0",
-    "copyright": "© 2025 VibeVoice"
+    "copyright": "© 2025 VibeVoiceFusion"
   },
   "navigation": {
     "currentProject": "Current Project",

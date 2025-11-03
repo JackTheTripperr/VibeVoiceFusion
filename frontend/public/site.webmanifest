@@ -1,7 +1,7 @@
 {
-  "name": "VibeVoice - Multi-Speaker Voice Editor",
-  "short_name": "VibeVoice",
-  "description": "Text-to-speech editor with voice cloning for multiple speakers",
+  "name": "VibeVoiceFusion - Multi-Speaker Voice Editor",
+  "short_name": "VibeVoiceFusion",
+  "description": "Text-to-speech editor with voice cloning for multiple speakers, built on Microsoft's VibeVoice model",
   "start_url": "/",
   "display": "standalone",
   "background_color": "#ffffff",

@@ -1,10 +1,12 @@
-# VibeVoice
+# VibeVoiceFusion
 
 <div align="center">
 
-<img src="frontend/public/icon-rect-pulse.svg" alt="VibeVoice Logo" width="120"/>
+<img src="frontend/public/icon-rect-pulse.svg" alt="VibeVoiceFusion Logo" width="120"/>
 
 **A Complete Web Application for Multi-Speaker Voice Generation**
+
+*Built on Microsoft's VibeVoice Model*
 
 [![License](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)
 [![Python](https://img.shields.io/badge/python-3.9+-blue.svg)](https://www.python.org/)
@@ -23,7 +25,7 @@
 
 ### Purpose
 
-VibeVoice is a **web application** for generating high-quality, multi-speaker synthetic speech with voice cloning capabilities. Built on Microsoft's VibeVoice model (AR + diffusion architecture), this project provides a complete full-stack solution with an intuitive user interface, project management, and advanced VRAM optimization features.
+VibeVoiceFusion is a **web application** for generating high-quality, multi-speaker synthetic speech with voice cloning capabilities. Built on Microsoft's VibeVoice model (AR + diffusion architecture), this project provides a complete full-stack solution with an intuitive user interface, project management, and advanced VRAM optimization features.
 
 **Key Goals:**
 - Provide a user-friendly interface for voice generation without requiring coding knowledge

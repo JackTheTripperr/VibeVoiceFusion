@@ -19,8 +19,8 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "VibeVoice - Multi-Speaker Voice Editor",
-  description: "Text-to-speech editor with voice cloning for multiple speakers",
+  title: "VibeVoiceFusion - Multi-Speaker Voice Editor",
+  description: "Text-to-speech editor with voice cloning for multiple speakers, built on Microsoft's VibeVoice model",
   icons: {
     icon: [
       { url: '/favicon.ico' },

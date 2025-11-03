@@ -1,10 +1,12 @@
-# VibeVoice
+# VibeVoiceFusion
 
 <div align="center">
 
-<img src="frontend/public/icon-rect-pulse.svg" alt="VibeVoice Logo" width="120"/>
+<img src="frontend/public/icon-rect-pulse.svg" alt="VibeVoiceFusion Logo" width="120"/>
 
 **完整的多说话人语音生成 Web 应用**
+
+*基于 Microsoft VibeVoice 模型构建*
 
 [![License](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)
 [![Python](https://img.shields.io/badge/python-3.9+-blue.svg)](https://www.python.org/)
@@ -23,7 +25,7 @@
 
 ### 项目目的
 
-VibeVoice 是一个**Web 应用**，用于生成高质量、多说话人的合成语音，具备声音克隆功能。基于微软的 VibeVoice 模型（AR + 扩散架构），本项目提供完整的全栈解决方案，包含直观的用户界面、项目管理和先进的显存优化功能。
+VibeVoiceFusion 是一个**Web 应用**，用于生成高质量、多说话人的合成语音，具备声音克隆功能。基于微软的 VibeVoice 模型（AR + 扩散架构），本项目提供完整的全栈解决方案，包含直观的用户界面、项目管理和先进的显存优化功能。
 
 **核心目标：**
 
